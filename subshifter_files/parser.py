@@ -13,11 +13,12 @@ def integer(arg):
 
 parser = argparse.ArgumentParser(prog=PROGRAM_SHORTCUT, description=DESCRIPTION)
 
-parser.add_argument("input_file", type=str, required=True, help="Specify intput file name")
+parser.add_argument("input_file", type=str, help="Specify intput file name")
 
+parser.add_argument("-m", "--mil", type=integer, default=0, help="Time for resync in seconds")
 parser.add_argument("-s", "--sec", type=integer, default=0, help="Time for resync in seconds")
-parser.add_argument("-m", "--min", type=integer, default=0, help="Time for resync in seconds")
-parser.add_argument("-h", "--hrs", type=integer, default=0, help="Time for resync in seconds")
+parser.add_argument("-M", "--min", type=integer, default=0, help="Time for resync in seconds")
+parser.add_argument("-H", "--hrs", type=integer, default=0, help="Time for resync in seconds")
 parser.add_argument("-f", "--format", type=str, default="srt", help="Specify file format (extension)")
 
 args = parser.parse_args()
