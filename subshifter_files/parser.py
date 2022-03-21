@@ -1,10 +1,9 @@
 import argparse
 from constants import DESCRIPTION, PROGRAM_SHORTCUT
-import os
 
 # Functions
 def integer(arg):
-    # limits arguments to positive integers
+    # limits arguments to integers
     try:
         argument = int(arg)
     except ValueError:
@@ -13,12 +12,13 @@ def integer(arg):
 
 parser = argparse.ArgumentParser(prog=PROGRAM_SHORTCUT, description=DESCRIPTION)
 
+# positional arguments
 parser.add_argument("input_file", type=str, help="Specify intput file name")
 
-parser.add_argument("-m", "--mil", type=integer, default=0, help="Time for resync in seconds")
+# optional arguments
+parser.add_argument("-m", "--mil", type=integer, default=0, help="Time for resync in milliseconds")
 parser.add_argument("-s", "--sec", type=integer, default=0, help="Time for resync in seconds")
-parser.add_argument("-M", "--min", type=integer, default=0, help="Time for resync in seconds")
-parser.add_argument("-H", "--hrs", type=integer, default=0, help="Time for resync in seconds")
-parser.add_argument("-f", "--format", type=str, default="srt", help="Specify file format (extension)")
+parser.add_argument("-M", "--min", type=integer, default=0, help="Time for resync in minutes")
+parser.add_argument("-H", "--hrs", type=integer, default=0, help="Time for resync in hours")
 
 args = parser.parse_args()
