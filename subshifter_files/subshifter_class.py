@@ -2,10 +2,19 @@ class SubShifter:
 
     def shift(self, filename, hours, minutes, seconds, milliseconds):
         # resyncs file by given time
-        list_of_lines = self._read_file(filename, hours, minutes, seconds, milliseconds)
-        self._generate_shifted_file(list_of_lines, self._generate_filename(filename))
+        # convert time to milliseconds
+        millis = self._time_to_millis(hours, minutes, seconds, milliseconds)
+        name, extension = self._separate_file_extension(filename)
+        if extension == "srt":
+            list_of_lines = self._read_srt_file(filename, millis)
+            self._generate_shifted_srt_file(list_of_lines, self._generate_filename(filename))
+            print("srt")
+        elif extension == "sub":
+            list_of_lines = self._read_sub_file(filename, millis)
+            self._generate_shifted_sub_file(list_of_lines, self._generate_filename(filename))
+            print("sub")
 
-    def _read_file(self, filename, hours, minutes, seconds, milliseconds):
+    def _read_srt_file(self, filename, millis):
         # opens specified file and reads each line
         list_of_lines = []
         line_counter = 0
@@ -25,8 +34,8 @@ class SubShifter:
                         # separate origin and end
                         origin, end = self._prepare_for_shift(line)
                         # resync
-                        origin = self._shift_time(origin, hours, minutes, seconds, milliseconds)
-                        end = self._shift_time(end, hours, minutes, seconds, milliseconds)
+                        origin = self._shift_time(origin, millis)
+                        end = self._shift_time(end, millis)
                         # give proper format and append
                         time_line = f"{origin} --> {end}\n"
                         block.append(time_line)
@@ -37,18 +46,44 @@ class SubShifter:
             list_of_lines.append(block)
         return list_of_lines
 
+    def _read_sub_file(self, filename, millis):
+        list_of_lines = []
+        with open(filename, "r") as f:
+            for line in f:
+                origin, end, text = self._separate_sub_line(line)
+                origin, end = self._shift_sub_line(origin, end, millis)
+                line_connected = "{" + str(origin) + "}" + "{" + str(end) + "}" + text
+                list_of_lines.append(line_connected)
+        return list_of_lines
+
+    def _separate_sub_line(self, line):
+        origin, end, text = line.strip().split("}")
+        origin = int(origin.strip().replace("{", ""))
+        end = int(end.strip().replace("{", ""))
+        return origin, end, text
+
+    def _shift_sub_line(self, origin, end, millis):
+        return origin + millis, end + millis
+
     def _prepare_for_shift(self, line):
         # changes time format for calculations
         line = line.replace(",", ":")
         origin, end = line.strip().split(" --> ")
         return origin, end
 
-    def _generate_shifted_file(self, list_of_lines, filename):
+    def _generate_shifted_srt_file(self, list_of_lines, filename):
         # generates resynchronized srt file
         with open(filename, "w") as f:
             for block in list_of_lines:
                 for line in block:
                     f.write(line)
+                f.write("\n")
+
+    def _generate_shifted_sub_file(self, list_of_lines, filename):
+        # generates resynchronized sub file
+        with open(filename, "w") as f:
+            for line in list_of_lines:
+                f.write(line)
                 f.write("\n")
 
     def _generate_filename(self, filename):
@@ -68,15 +103,14 @@ class SubShifter:
         name = filename[:len(filename) - i]
         return name, extension[::-1]
 
-    def _shift_time(self, time, hours, minutes, seconds, milliseconds):
+    def _shift_time(self, time, millis):
         # resyncs time by given values
         time = list(map(int, time.strip().split(":")))
         zeroes = []
 
         # calculates time in milliseconds
         time_in_millis = self._time_to_millis(time[0], time[1], time[2], time[3])
-        time_plus_in_millis = self._time_to_millis(hours, minutes, seconds, milliseconds)
-        new_time = time_in_millis + time_plus_in_millis
+        new_time = time_in_millis + millis
 
         # list of new time values [hrs, min, sec, millis]
         new_time = list(self._millis_to_time(new_time))
