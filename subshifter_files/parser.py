@@ -20,5 +20,6 @@ parser.add_argument("-m", "--mil", type=integer, default=0, help="Time for resyn
 parser.add_argument("-s", "--sec", type=integer, default=0, help="Time for resync in seconds")
 parser.add_argument("-M", "--min", type=integer, default=0, help="Time for resync in minutes")
 parser.add_argument("-H", "--hrs", type=integer, default=0, help="Time for resync in hours")
+parser.add_argument("-f", "--filetype", default="srt", help="Output file type [srt/sub]")
 
 args = parser.parse_args()

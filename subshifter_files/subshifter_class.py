@@ -1,6 +1,6 @@
 class SubShifter:
 
-    def shift(self, filename, hours, minutes, seconds, milliseconds):
+    def shift(self, filename, hours, minutes, seconds, milliseconds, filetype):
         # resyncs file by given time
         # convert time to milliseconds
         millis = self._time_to_millis(hours, minutes, seconds, milliseconds)
