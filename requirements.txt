@@ -1,0 +1,1 @@
+chardet @ file:///C:/ci/chardet_1607706937985/work
