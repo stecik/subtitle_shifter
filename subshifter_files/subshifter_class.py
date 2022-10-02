@@ -1,24 +1,31 @@
+import chardet
+import os
+import shutil
+
 class SubShifter:
 
-    def shift(self, filename, hours, minutes, seconds, milliseconds, filetype):
+    def shift(self, filename, hours, minutes, seconds, milliseconds):
         # resyncs file by given time
+        enc_old = self._get_encoding(filename)
+        self._normalize_encoding(filename, enc_old, "utf-8")
+        temp_filename = f"temp_{filename}"
         # convert time to milliseconds
         millis = self._time_to_millis(hours, minutes, seconds, milliseconds)
-        name, extension = self._separate_file_extension(filename)
+        name, extension = self._separate_file_extension(temp_filename)
         if extension == "srt":
-            list_of_lines = self._read_srt_file(filename, millis)
+            list_of_lines = self._read_srt_file(temp_filename, millis)
             self._generate_shifted_srt_file(list_of_lines, self._generate_filename(filename))
-            print("srt")
         elif extension == "sub":
-            list_of_lines = self._read_sub_file(filename, millis)
+            list_of_lines = self._read_sub_file(temp_filename, millis)
             self._generate_shifted_sub_file(list_of_lines, self._generate_filename(filename))
-            print("sub")
+        os.remove(temp_filename)
+
 
     def _read_srt_file(self, filename, millis):
         # opens specified file and reads each line
         list_of_lines = []
         line_counter = 0
-        with open(filename, "r") as f:
+        with open(filename, "r", encoding="utf-8") as f:
             block = []
             for line in f:
                 # if line is a separator appends block and resets it
@@ -48,7 +55,7 @@ class SubShifter:
 
     def _read_sub_file(self, filename, millis):
         list_of_lines = []
-        with open(filename, "r") as f:
+        with open(filename, "r", encoding="utf-8") as f:
             for line in f:
                 origin, end, text = self._separate_sub_line(line)
                 origin, end = self._shift_sub_line(origin, end, millis)
@@ -73,7 +80,7 @@ class SubShifter:
 
     def _generate_shifted_srt_file(self, list_of_lines, filename):
         # generates resynchronized srt file
-        with open(filename, "w") as f:
+        with open(filename, "w", encoding="utf-8") as f:
             for block in list_of_lines:
                 for line in block:
                     f.write(line)
@@ -81,7 +88,7 @@ class SubShifter:
 
     def _generate_shifted_sub_file(self, list_of_lines, filename):
         # generates resynchronized sub file
-        with open(filename, "w") as f:
+        with open(filename, "w", encoding="utf-8") as f:
             for line in list_of_lines:
                 f.write(line)
                 f.write("\n")
@@ -142,3 +149,29 @@ class SubShifter:
             return l
         l.append("")
         return l
+
+    def _get_encoding(self, file):
+        rawdata = open(file, 'rb').read()
+        enc = chardet.detect(rawdata)
+        file_encoding = enc['encoding'].lower()
+        return file_encoding
+
+    def _normalize_encoding(self, file, enc_old, enc_new):
+        # creates temporary file and converts it's encoding to utf-8
+        if enc_old != "utf-8":
+            try:
+                if enc_old == "windows-1252" or "windows-1254":
+                    with open(file, "r") as f:
+                        content = f.read()
+                else:
+                    with open(file, "r", encoding=enc_old) as f:
+                        content = f.read()
+            except:
+                print("Unsupported file encoding - use ANSI or UTF-8")
+                return False
+            with open(f"temp_{file}", "w", encoding=enc_new) as f:
+                f.write(content)
+                return True
+        else:
+            shutil.copyfile(file, f"temp_{file}")
+            return True
